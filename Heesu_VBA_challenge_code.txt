@@ -1,0 +1,124 @@
+Sub Worksheet():
+
+'code from https://www.extendoffice.com/documents/excel/5333-excel-run-macro-multiple-sheets.html
+Dim sheet As Worksheet
+    Application.ScreenUpdating = False
+    For Each sheet In Worksheets
+        sheet.Select
+        Call stockticker
+    Next
+    Application.ScreenUpdating = True
+
+End Sub
+
+Sub stockticker():
+
+Dim i As Long
+Dim last_row As Long
+Dim opening_val As Double
+
+'defining the last row as
+last_row = Cells(Rows.Count, 1).End(xlUp).Row
+'column number to analyze
+Column = 1
+'row number of ticker to be printed into
+ticker_row = 2
+'set row number for yearly change column
+change_row = 2
+'set row number of initial opening value
+j = 2
+'make variable for opening value, this will be changed down the line
+opening_val = Cells(j, 3).Value
+
+total_vol = 0
+
+For i = 2 To last_row
+    
+    'total stock volume
+     total_vol = total_vol + Cells(i, 7).Value
+    
+    'if row in front <> current column then put value of current
+    'cell into ticker column
+    If Cells(i + 1, Column).Value <> Cells(i, Column).Value Then
+    Cells(ticker_row, 9).Value = Cells(i, Column).Value
+    
+        'assigning a cell in the yearly change column to the result of
+        'the following equation
+        Cells(change_row, 10).Value = Cells(i, 6).Value - opening_val
+        'set cells to have $ currency
+        Cells(change_row, 10).NumberFormat = "$#,##0.00"
+        
+        'calculate percentage change. initially thought that it should be placed
+        'had to change the position of this line multiple times before it output
+        'the ideal result
+        If opening_val <> 0 Then
+        Cells(change_row, 11).Value = Cells(change_row, 10).Value / opening_val
+        Cells(change_row, 11).NumberFormat = "0.##%"
+        End If
+        
+        'setting colour depending on value
+        If Cells(i, 6).Value < opening_val Then
+            Cells(change_row, 10).Interior.ColorIndex = 3
+            Else
+            Cells(change_row, 10).Interior.ColorIndex = 4
+    
+    
+        End If
+        'totalstock cell
+        Cells(change_row, 12).Value = total_vol
+        Cells(change_row, 12).NumberFormat = "#,#"
+        
+     'move to next row in "Ticker"
+    ticker_row = ticker_row + 1
+    
+    'move onto next row in yearly change column
+    change_row = change_row + 1
+    
+    'now we're updating the initial year value to use row
+    'that had a value the didnt match the previous row
+    opening_val = Cells(i + 1, 3).Value
+    
+    total_vol = 0
+     
+    End If
+    
+
+Next
+
+'finding greatest increase and decrease percentage
+Cells(j, 16).Value = Cells(i, 9).Value
+Cells(j + 1, 16).Value = Cells(i, 9).Value
+Cells(j + 2, 16).Value = Cells(i, 9).Value
+greatestinc = Cells(i, 11).Value
+greatestdecr = Cells(i, 11).Value
+greatestvol = Cells(i, 12).Value
+
+For i = 2 To Cells(Rows.Count, 9).End(xlUp).Row
+
+    If greatestinc < Cells(i + 1, 11).Value Then
+        '
+        Cells(j, 15).Value = Cells(i + 1, 9).Value
+        Cells(j, 16).Value = Cells(i + 1, 11).Value
+        Cells(j, 16).NumberFormat = "#.##%"
+        greatestinc = Cells(i + 1, 11).Value
+
+    ElseIf greatestdecr > Cells(i + 1, 11) Then
+    
+        Cells(j + 1, 15).Value = Cells(i + 1, 9).Value
+        Cells(j + 1, 16).Value = Cells(i + 1, 11).Value
+        Cells(j + 1, 16).NumberFormat = "#.##%"
+        greatestdecr = Cells(i + 1, 11)
+    End If
+    
+    
+    If greatestvol < Cells(i + 1, 12) Then
+    
+        Cells(j + 2, 15).Value = Cells(i + 1, 9).Value
+        Cells(j + 2, 16).Value = Cells(i + 1, 12).Value
+        greatestvol = Cells(j + 2, 16).Value
+        Cells(j + 2, 16).NumberFormat = "#,#"
+    End If
+    
+Next
+
+End Sub
